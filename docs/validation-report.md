@@ -19,6 +19,8 @@ This report separates executed checks from configuration-only and cloud-dependen
 - Runtime endpoints: WorkBoard, WorkBoard readiness, CloudForge dashboard, API status, Prometheus readiness, and Grafana health all returned HTTP 200.
 - Browser product check: a real WorkBoard task was created, moved from To do to In progress, and reflected immediately in the statistics and activity feed.
 - Prometheus collection: WorkBoard, CloudForge API, Node Exporter, and cAdvisor targets all reported `up`; live WorkBoard request metrics were observed.
+- GitHub-hosted CI: backend, frontend, container/security, and Terraform jobs passed on `main` ([run 43711193270](https://github.com/sneha2003/cloudforge-devops-platform/actions/runs/43711193270)).
+- GHCR publication: API, dashboard, and WorkBoard images were built and published with immutable SHA tags, SBOM, and provenance ([run 43711193328](https://github.com/sneha2003/cloudforge-devops-platform/actions/runs/43711193328)).
 
 The only Python test warning originates in the pinned Starlette test client's use of an AnyIO compatibility alias; it is not a failing project check.
 
@@ -27,9 +29,8 @@ The only Python test warning originates in the pinned Starlette test client's us
 - **End-to-end container rollback:** verified locally. A release candidate failed readiness policy, CloudForge restored the last verified WorkBoard artifact, reran smoke tests, and recorded the rolled-back release and correlated incident.
 - **Terraform provider validation:** the Terraform CLI is not installed. Files were syntax-reviewed, and CI is configured to run `fmt`, `init -backend=false`, and `validate`.
 - **Azure deployment:** no subscription, credentials, DNS name, or spending authorization was provided. No cloud resource was created.
-- **GitHub Actions/GHCR:** workflows were parsed locally but require a push to GitHub to execute.
 
 ## Acceptance status
 
-WorkBoard application code, CloudForge dashboard and API, local Docker runtime, health/readiness, monitoring collection, CI/CD definitions, immutable release publishing, alerting, Terraform, HTTPS cloud overlay, rollback, security controls, automated tests, and documentation are implemented. Local rollback is verified. Terraform-provider, GitHub-hosted, and Azure checks remain explicitly pending for the environmental reasons above.
+WorkBoard application code, CloudForge dashboard and API, local Docker runtime, health/readiness, monitoring collection, GitHub-hosted CI, immutable release publishing, alerting, Terraform, HTTPS cloud overlay, rollback, security controls, automated tests, and documentation are implemented. Local rollback and hosted pipelines are verified. Terraform-provider and Azure checks remain explicitly pending for the environmental reasons above.
 
