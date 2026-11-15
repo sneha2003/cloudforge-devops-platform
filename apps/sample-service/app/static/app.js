@@ -1,8 +1,64 @@
 const state = { tasks: [], activity: [], search: '', project: '', priority: '' };
 const $ = (selector) => document.querySelector(selector);
 const statusLabels = { todo: 'To do', in_progress: 'In progress', done: 'Done' };
+const demoMode = window.WORKBOARD_DEMO === true;
+
+const demoTasks = [
+  { id: 101, title: 'Define release readiness checks', description: 'Document health probes and acceptance criteria for the next production release.', project: 'Platform Reliability', priority: 'high', status: 'done', due_date: '2026-11-08' },
+  { id: 102, title: 'Review container security report', description: 'Triage image findings and record accepted remediation actions.', project: 'Security', priority: 'high', status: 'in_progress', due_date: '2026-11-18' },
+  { id: 103, title: 'Validate rollback runbook', description: 'Run the recovery procedure against the candidate WorkBoard image.', project: 'Platform Reliability', priority: 'medium', status: 'in_progress', due_date: '2026-11-20' },
+  { id: 104, title: 'Refine service-level dashboard', description: 'Align latency and availability panels with operational review needs.', project: 'Observability', priority: 'medium', status: 'todo', due_date: '2026-11-24' },
+  { id: 105, title: 'Publish deployment evidence', description: 'Attach CI results, image digest and verification outcome to the release.', project: 'Delivery', priority: 'low', status: 'todo', due_date: '2026-11-26' },
+  { id: 106, title: 'Add incident correlation', description: 'Link failed releases to recovery events in the operations console.', project: 'Observability', priority: 'medium', status: 'done', due_date: '2026-11-11' },
+];
+const demoActivity = [
+  { id: 3, action: 'completed', detail: 'Completed “Define release readiness checks”', created_at: new Date(Date.now() - 36e5).toISOString() },
+  { id: 2, action: 'updated', detail: 'Moved “Review container security report” to In progress', created_at: new Date(Date.now() - 3 * 36e5).toISOString() },
+  { id: 1, action: 'created', detail: 'Created “Publish deployment evidence”', created_at: new Date(Date.now() - 22 * 36e5).toISOString() },
+];
+
+if (demoMode) {
+  state.tasks = structuredClone(demoTasks);
+  state.activity = structuredClone(demoActivity);
+  document.documentElement.classList.add('demo-mode');
+}
+
+function demoStats() {
+  const done = state.tasks.filter((task) => task.status === 'done').length;
+  const inProgress = state.tasks.filter((task) => task.status === 'in_progress').length;
+  const today = new Date().toISOString().slice(0, 10);
+  return { total: state.tasks.length, done, in_progress: inProgress, overdue: state.tasks.filter((task) => task.due_date && task.due_date < today && task.status !== 'done').length, completion_rate: state.tasks.length ? Math.round(done / state.tasks.length * 100) : 0, projects: new Set(state.tasks.map((task) => task.project)).size };
+}
+
+function recordDemo(action, detail) {
+  state.activity.unshift({ id: Date.now(), action, detail, created_at: new Date().toISOString() });
+}
 
 async function api(path, options = {}) {
+  if (demoMode) {
+    const id = Number(path.split('/').at(-1));
+    const payload = options.body ? JSON.parse(options.body) : null;
+    if (path === '/api/tasks' && (!options.method || options.method === 'GET')) return structuredClone(state.tasks);
+    if (path === '/api/stats') return demoStats();
+    if (path === '/api/activity') return structuredClone(state.activity);
+    if (path === '/api/tasks' && options.method === 'POST') {
+      const task = { ...payload, id: Math.max(100, ...state.tasks.map((item) => item.id)) + 1 };
+      state.tasks.push(task); recordDemo('created', `Created “${task.title}”`); return structuredClone(task);
+    }
+    if (path.startsWith('/api/tasks/') && options.method === 'PATCH') {
+      const task = state.tasks.find((item) => item.id === id);
+      if (!task) throw new Error('Task not found');
+      Object.assign(task, payload);
+      recordDemo(payload.status ? (payload.status === 'done' ? 'completed' : 'updated') : 'updated', payload.status ? `Moved “${task.title}” to ${statusLabels[task.status]}` : `Updated “${task.title}”`);
+      return structuredClone(task);
+    }
+    if (path.startsWith('/api/tasks/') && options.method === 'DELETE') {
+      const index = state.tasks.findIndex((item) => item.id === id);
+      if (index < 0) throw new Error('Task not found');
+      const [task] = state.tasks.splice(index, 1); recordDemo('deleted', `Deleted “${task.title}”`); return null;
+    }
+    throw new Error('Unsupported demo action');
+  }
   const response = await fetch(path, { headers: { 'Content-Type': 'application/json' }, ...options });
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
@@ -111,4 +167,5 @@ document.querySelectorAll('.nav-item[data-view]').forEach((button) => button.add
 $('.mobile-menu').addEventListener('click', () => document.querySelector('.sidebar').classList.toggle('open'));
 $('#today').textContent = new Intl.DateTimeFormat(undefined, { weekday: 'short', month: 'short', day: 'numeric' }).format(new Date());
 refresh();
+if (demoMode) showToast('Portfolio demo · changes stay in this browser session');
 

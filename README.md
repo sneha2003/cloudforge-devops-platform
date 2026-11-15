@@ -6,6 +6,10 @@
 ![Terraform](https://img.shields.io/badge/Terraform-Azure-7B42BC?logo=terraform)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
 
+### [Open the interactive CloudForge demo](https://sneha2003.github.io/cloudforge-devops-platform/)
+
+The public site is a recorded validation snapshot designed for portfolio review. It lets visitors explore the operations console and use the WorkBoard application without presenting simulated data as a live production environment. The deployable stack, CI results, monitoring configuration, and release evidence remain available in this repository.
+
 CloudForge is an operations platform built around **WorkBoard**, a separate task-management application with persistent data. It answers the questions an operator needs during a release: Is the service ready? What version is running? Has latency changed? Did verification pass? If a candidate fails, which artifact was restored?
 
 ![CloudForge service overview](docs/assets/cloudforge-overview.png)

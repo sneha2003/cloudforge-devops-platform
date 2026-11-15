@@ -41,7 +41,7 @@ export interface OperationalStatus {
   last_successful_deployment: Deployment | null
   recent_deployments: Deployment[]
   active_incidents: Incident[]
-  data_classification: 'live'
+  data_classification: 'live' | 'snapshot'
 }
 
 export interface AppInfo {

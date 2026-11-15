@@ -9,6 +9,7 @@ __pycache__/
 *.sqlite*
 node_modules/
 dist/
+pages-dist/
 *.tsbuildinfo
 vite.config.js
 vite.config.d.ts

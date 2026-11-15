@@ -6,10 +6,13 @@ import {
   Workflow, XCircle, Zap,
 } from 'lucide-react'
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { api } from './api'
+import { api, isDemo } from './api'
 import type { AppInfo, Deployment, Incident, MetricSeries, OperationalStatus } from './types'
 
 type Page = 'overview' | 'deployments' | 'infrastructure' | 'monitoring' | 'incidents' | 'architecture'
+
+const repositoryUrl = 'https://github.com/sneha2003/cloudforge-devops-platform'
+const workboardUrl = isDemo ? './workboard/' : 'http://localhost:8100'
 
 const pages: { id: Page; label: string; icon: typeof Activity; group: string }[] = [
   { id: 'overview', label: 'Service Overview', icon: LayoutDashboard, group: 'Operations' },
@@ -41,7 +44,7 @@ function Empty({ title, text, icon: Icon = Box }: { title: string; text: string;
 
 function PageHead({ eyebrow, title, description, status }: { eyebrow: string; title: string; description: string; status?: string }) {
   return <div className="page-head"><div><div className="eyebrow">{eyebrow}</div><h1>{title}</h1><p>{description}</p></div>
-    <div className="context-strip"><span>ENV / LOCAL</span><span className="context-divider"/><span className="live-dot"/>{status ?? 'TELEMETRY ACTIVE'}</div>
+    <div className="context-strip"><span>ENV / {isDemo ? 'VALIDATION' : 'LOCAL'}</span><span className="context-divider"/><span className="live-dot"/>{status ?? (isDemo ? 'RECORDED SNAPSHOT' : 'TELEMETRY ACTIVE')}</div>
   </div>
 }
 
@@ -185,11 +188,11 @@ export default function App() {
 
   const groups = ['Operations', 'Delivery', 'Platform']
   return <div className="app-shell"><aside className="sidebar"><div className="brand"><div className="brand-mark"><Zap size={17} fill="currentColor"/></div><div><strong>CloudForge</strong><span>Platform Operations</span></div></div>
-    <div className="tenant"><span>CF</span><div><strong>CloudForge Platform</strong><small>Local operations tenant</small></div></div>
+    <div className="tenant"><span>CF</span><div><strong>CloudForge Platform</strong><small>{isDemo ? 'Portfolio validation environment' : 'Local operations tenant'}</small></div></div>
     {groups.map(group => <div className="nav-group" key={group}><div className="nav-label">{group}</div>{pages.filter(item => item.group === group).map(({ id, label, icon: Icon }) => <button className={`nav-button ${page === id ? 'active' : ''}`} onClick={() => navigate(id)} key={id}><Icon size={15}/>{label}</button>)}</div>)}
-    <a className="nav-button product-nav" href="http://localhost:8100" target="_blank" rel="noreferrer"><ExternalLink size={15}/>Open WorkBoard</a>
+    <a className="nav-button product-nav" href={workboardUrl} target="_blank" rel="noreferrer"><ExternalLink size={15}/>Open WorkBoard</a>
     <div className="sidebar-foot"><div className="environment"><span className={`live-dot ${status?.service === 'healthy' ? '' : 'down'}`}/><div><strong>{status?.tracked_service?.name ?? 'WorkBoard'}</strong><span>{status?.service === 'healthy' ? 'Operational' : 'Unavailable'} · {status?.version ?? '—'}</span></div></div></div>
-  </aside><main className="main"><header className="topbar"><div className="breadcrumb"><span>CloudForge</span><b>/</b><strong>{current.label}</strong></div><div className="top-actions"><a className="header-link" href="http://localhost:8100" target="_blank" rel="noreferrer"><ExternalLink size={13}/>WorkBoard</a><div className="environment-badge"><span>LOCAL</span><i/>LIVE DATA</div><button className="icon-button" onClick={() => void load()} aria-label="Refresh data"><RefreshCw size={15}/></button><button className="icon-button" onClick={() => setDark(!dark)} aria-label="Toggle color theme">{dark ? <Sun size={15}/> : <Moon size={15}/>}</button></div></header>
-    <div className="content">{error && <div className="error-banner"><AlertTriangle size={16}/><div><strong>Platform data unavailable</strong><span>{error}. Confirm the CloudForge API is healthy and retry.</span></div></div>}{content}</div>
+  </aside><main className="main"><header className="topbar"><div className="breadcrumb"><span>CloudForge</span><b>/</b><strong>{current.label}</strong></div><div className="top-actions"><a className="header-link" href={repositoryUrl} target="_blank" rel="noreferrer"><GitBranch size={13}/>Source &amp; CI</a><a className="header-link" href={workboardUrl} target="_blank" rel="noreferrer"><ExternalLink size={13}/>WorkBoard</a><div className="environment-badge"><span>{isDemo ? 'DEMO' : 'LOCAL'}</span><i/>{isDemo ? 'VALIDATION SNAPSHOT' : 'LIVE DATA'}</div><button className="icon-button" onClick={() => void load()} aria-label="Refresh data"><RefreshCw size={15}/></button><button className="icon-button" onClick={() => setDark(!dark)} aria-label="Toggle color theme">{dark ? <Sun size={15}/> : <Moon size={15}/>}</button></div></header>
+    <div className="content">{isDemo && <div className="demo-banner"><ShieldCheck size={17}/><div><strong>Interactive portfolio validation</strong><span>This public view uses a recorded test snapshot. The repository contains the deployable stack, automated tests, monitoring configuration, and release evidence.</span></div><a href={`${repositoryUrl}/actions`} target="_blank" rel="noreferrer">View CI evidence <ExternalLink size={12}/></a></div>}{error && <div className="error-banner"><AlertTriangle size={16}/><div><strong>Platform data unavailable</strong><span>{error}. Confirm the CloudForge API is healthy and retry.</span></div></div>}{content}</div>
   </main><nav className="mobile-nav">{pages.map(({ id, label, icon: Icon }) => <button className={page === id ? 'active' : ''} onClick={() => navigate(id)} key={id}><Icon size={17}/><span>{label.split(' ')[0]}</span></button>)}</nav></div>
 }
