@@ -1,0 +1,56 @@
+name: CI
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  backend:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12', cache: pip, cache-dependency-path: '**/requirements-dev.txt' }
+      - run: pip install -r apps/api/requirements-dev.txt -r apps/sample-service/requirements-dev.txt
+      - run: ruff check apps/api apps/sample-service
+      - run: PYTHONPATH=apps/api pytest apps/api/tests tests
+      - run: PYTHONPATH=apps/sample-service pytest apps/sample-service/tests
+  frontend:
+    runs-on: ubuntu-24.04
+    defaults: { run: { working-directory: apps/dashboard } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22', cache: npm, cache-dependency-path: apps/dashboard/package-lock.json }
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+  containers:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with: { context: apps/api, push: false, tags: cloudforge-api:test }
+      - uses: docker/build-push-action@v6
+        with: { context: apps/dashboard, push: false, tags: cloudforge-dashboard:test }
+      - uses: docker/build-push-action@v6
+        with: { context: apps/sample-service, push: false, tags: cloudforge-workboard:test }
+      - name: Scan repository
+        uses: aquasecurity/trivy-action@0.28.0
+        with: { scan-type: fs, scan-ref: ., severity: HIGH,CRITICAL, exit-code: '1', ignore-unfixed: true }
+  terraform:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with: { terraform_version: 1.10.5 }
+      - run: terraform -chdir=infrastructure/terraform fmt -check -recursive
+      - run: terraform -chdir=infrastructure/terraform init -backend=false
+      - run: terraform -chdir=infrastructure/terraform validate
+

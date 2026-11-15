@@ -1,0 +1,25 @@
+groups:
+  - name: cloudforge.rules
+    rules:
+      - alert: WorkBoardNotReady
+        expr: workboard_ready == 0 or absent(workboard_ready)
+        for: 1m
+        labels: { severity: critical }
+        annotations:
+          summary: WorkBoard is not ready
+          description: The product readiness gauge has been zero or absent for one minute.
+      - alert: WorkBoardHighErrorRate
+        expr: sum(rate(workboard_http_requests_total{status=~"5.."}[5m])) / clamp_min(sum(rate(workboard_http_requests_total[5m])), 0.001) > 0.05
+        for: 5m
+        labels: { severity: warning }
+        annotations:
+          summary: API error rate exceeds five percent
+          description: Investigate application logs and correlate the start time with recent deployments.
+      - alert: HostMemoryPressure
+        expr: 100 * (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) > 90
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: Host memory utilization exceeds ninety percent
+          description: Sustained memory pressure can cause containers to be killed.
+

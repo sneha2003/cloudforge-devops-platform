@@ -1,0 +1,16 @@
+{
+  "annotations": {"list": []}, "editable": false, "fiscalYearStartMonth": 0, "graphTooltip": 1,
+  "id": null, "links": [], "liveNow": false,
+  "panels": [
+    {"type":"stat","title":"WorkBoard readiness","id":1,"gridPos":{"h":5,"w":6,"x":0,"y":0},"fieldConfig":{"defaults":{"unit":"percent","thresholds":{"mode":"absolute","steps":[{"color":"red"},{"color":"green","value":100}]}}},"targets":[{"expr":"100 * workboard_ready","legendFormat":"Ready","refId":"A"}]},
+    {"type":"stat","title":"WorkBoard request rate","id":2,"gridPos":{"h":5,"w":6,"x":6,"y":0},"fieldConfig":{"defaults":{"unit":"reqps"}},"targets":[{"expr":"sum(rate(workboard_http_requests_total[2m]))","refId":"A"}]},
+    {"type":"stat","title":"WorkBoard error percentage","id":3,"gridPos":{"h":5,"w":6,"x":12,"y":0},"fieldConfig":{"defaults":{"unit":"percentunit","thresholds":{"mode":"absolute","steps":[{"color":"green"},{"color":"red","value":0.05}]}}},"targets":[{"expr":"sum(rate(workboard_http_requests_total{status=~\"5..\"}[5m])) / clamp_min(sum(rate(workboard_http_requests_total[5m])), 0.001)","refId":"A"}]},
+    {"type":"stat","title":"WorkBoard P95 latency","id":4,"gridPos":{"h":5,"w":6,"x":18,"y":0},"fieldConfig":{"defaults":{"unit":"s"}},"targets":[{"expr":"histogram_quantile(0.95, sum(rate(workboard_http_request_duration_seconds_bucket[5m])) by (le))","refId":"A"}]},
+    {"type":"timeseries","title":"WorkBoard traffic and errors","id":5,"gridPos":{"h":9,"w":12,"x":0,"y":5},"fieldConfig":{"defaults":{"unit":"reqps"}},"targets":[{"expr":"sum(rate(workboard_http_requests_total[2m]))","legendFormat":"all requests","refId":"A"},{"expr":"sum(rate(workboard_http_requests_total{status=~\"5..\"}[2m]))","legendFormat":"server errors","refId":"B"}]},
+    {"type":"timeseries","title":"WorkBoard response latency","id":6,"gridPos":{"h":9,"w":12,"x":12,"y":5},"fieldConfig":{"defaults":{"unit":"s"}},"targets":[{"expr":"histogram_quantile(0.50, sum(rate(workboard_http_request_duration_seconds_bucket[5m])) by (le))","legendFormat":"p50","refId":"A"},{"expr":"histogram_quantile(0.95, sum(rate(workboard_http_request_duration_seconds_bucket[5m])) by (le))","legendFormat":"p95","refId":"B"}]},
+    {"type":"timeseries","title":"Host CPU utilization","id":7,"gridPos":{"h":8,"w":12,"x":0,"y":14},"fieldConfig":{"defaults":{"unit":"percent"}},"targets":[{"expr":"100 - avg(rate(node_cpu_seconds_total{mode=\"idle\"}[2m])) * 100","refId":"A"}]},
+    {"type":"timeseries","title":"Host memory utilization","id":8,"gridPos":{"h":8,"w":12,"x":12,"y":14},"fieldConfig":{"defaults":{"unit":"percent"}},"targets":[{"expr":"100 * (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)","refId":"A"}]}
+  ],
+  "refresh":"15s","schemaVersion":40,"tags":["cloudforge","operations"],"templating":{"list":[]},"time":{"from":"now-30m","to":"now"},"timezone":"browser","title":"CloudForge Operations Overview","uid":"cloudforge-overview","version":1
+}
+

@@ -1,0 +1,46 @@
+name: Deploy to Azure VM
+on:
+  workflow_dispatch:
+    inputs:
+      image:
+        description: Immutable WorkBoard image (sha tag required)
+        required: true
+        type: string
+      version:
+        description: Human-readable release version
+        required: true
+        type: string
+permissions:
+  contents: read
+  id-token: write
+concurrency: { group: azure-production, cancel-in-progress: false }
+jobs:
+  deploy:
+    environment: production
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Reject mutable image tags
+        env:
+          RELEASE_IMAGE: ${{ inputs.image }}
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: |
+          [[ "$RELEASE_IMAGE" =~ ^[a-zA-Z0-9._/:@-]+:sha-[0-9a-f]{7,40}$ ]]
+          [[ "$RELEASE_VERSION" =~ ^[a-zA-Z0-9._-]+$ ]]
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - name: Run controlled deployment on VM
+        uses: azure/cli@v2
+        env:
+          RELEASE_IMAGE: ${{ inputs.image }}
+          RELEASE_VERSION: ${{ inputs.version }}
+        with:
+          inlineScript: |
+            az vm run-command invoke \
+              --resource-group '${{ vars.AZURE_RESOURCE_GROUP }}' \
+              --name '${{ vars.AZURE_VM_NAME }}' \
+              --command-id RunShellScript \
+              --scripts "sudo -u cloudforge bash /opt/cloudforge/deploy/scripts/deploy.sh '$RELEASE_IMAGE' '$RELEASE_VERSION'"
+

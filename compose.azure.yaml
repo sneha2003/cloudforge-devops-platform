@@ -1,0 +1,28 @@
+services:
+  edge:
+    image: caddy:2.10.2-alpine
+    environment:
+      WORKBOARD_DOMAIN: ${WORKBOARD_DOMAIN:?Set WORKBOARD_DOMAIN to the public WorkBoard DNS name}
+      CLOUDFORGE_DOMAIN: ${CLOUDFORGE_DOMAIN:?Set CLOUDFORGE_DOMAIN to the CloudForge operations DNS name}
+      ACME_EMAIL: ${ACME_EMAIL:?Set ACME_EMAIL for certificate expiry notices}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./deploy/compose/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      sample-service:
+        condition: service_healthy
+      dashboard:
+        condition: service_healthy
+    restart: unless-stopped
+    networks: [frontend]
+    security_opt: [no-new-privileges:true]
+
+volumes:
+  caddy-data:
+  caddy-config:
+
