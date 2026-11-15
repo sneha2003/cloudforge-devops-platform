@@ -21,16 +21,16 @@ This report separates executed checks from configuration-only and cloud-dependen
 - Prometheus collection: WorkBoard, CloudForge API, Node Exporter, and cAdvisor targets all reported `up`; live WorkBoard request metrics were observed.
 - GitHub-hosted CI: backend, frontend, container/security, and Terraform jobs passed on `main` ([run 43711193270](https://github.com/sneha2003/cloudforge-devops-platform/actions/runs/43711193270)).
 - GHCR publication: API, dashboard, and WorkBoard images were built and published with immutable SHA tags, SBOM, and provenance ([run 43711193328](https://github.com/sneha2003/cloudforge-devops-platform/actions/runs/43711193328)).
+- End-to-end container rollback: a release candidate failed readiness policy, CloudForge restored the last verified WorkBoard artifact, reran smoke tests, and recorded the rolled-back release and correlated incident.
+- Terraform provider validation: Terraform 1.17.1 initialized the signed HashiCorp AzureRM 4.81.0 provider and returned `Success! The configuration is valid.` The provider selection is committed in `.terraform.lock.hcl`.
 
 The only Python test warning originates in the pinned Starlette test client's use of an AnyIO compatibility alias; it is not a failing project check.
 
-## Cloud-dependent checks
+## Cloud-dependent check
 
-- **End-to-end container rollback:** verified locally. A release candidate failed readiness policy, CloudForge restored the last verified WorkBoard artifact, reran smoke tests, and recorded the rolled-back release and correlated incident.
-- **Terraform provider validation:** the Terraform CLI is not installed. Files were syntax-reviewed, and CI is configured to run `fmt`, `init -backend=false`, and `validate`.
 - **Azure deployment:** no subscription, credentials, DNS name, or spending authorization was provided. No cloud resource was created.
 
 ## Acceptance status
 
-WorkBoard application code, CloudForge dashboard and API, local Docker runtime, health/readiness, monitoring collection, GitHub-hosted CI, immutable release publishing, alerting, Terraform, HTTPS cloud overlay, rollback, security controls, automated tests, and documentation are implemented. Local rollback and hosted pipelines are verified. Terraform-provider and Azure checks remain explicitly pending for the environmental reasons above.
+WorkBoard application code, CloudForge dashboard and API, local Docker runtime, health/readiness, monitoring collection, GitHub-hosted CI, immutable release publishing, alerting, Terraform, HTTPS cloud overlay, rollback, security controls, automated tests, and documentation are implemented. Local rollback, Terraform provider validation, and hosted pipelines are verified. Azure execution remains explicitly pending for the environmental reasons above.
 
