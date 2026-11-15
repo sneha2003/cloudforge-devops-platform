@@ -1,0 +1,133 @@
+name: cloudforge
+
+services:
+  sample-service:
+    image: ${CLOUDFORGE_SAMPLE_IMAGE:-cloudforge-workboard:local}
+    build:
+      context: ./apps/sample-service
+    environment:
+      WORKBOARD_ENVIRONMENT: ${CLOUDFORGE_ENV:-local}
+      WORKBOARD_VERSION: ${CLOUDFORGE_VERSION:-dev}
+      WORKBOARD_COMMIT_SHA: ${CLOUDFORGE_COMMIT_SHA:-unknown}
+      WORKBOARD_DATABASE_PATH: /data/workboard.db
+      WORKBOARD_FORCE_NOT_READY: ${CLOUDFORGE_FORCE_NOT_READY:-false}
+    volumes:
+      - sample-data:/data
+    ports:
+      - "8100:8100"
+    restart: unless-stopped
+    networks: [frontend, observability]
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+
+  api:
+    image: ${CLOUDFORGE_API_IMAGE:-cloudforge-api:local}
+    build:
+      context: ./apps/api
+    environment:
+      CLOUDFORGE_ENVIRONMENT: ${CLOUDFORGE_ENV:-local}
+      CLOUDFORGE_VERSION: ${CLOUDFORGE_VERSION:-dev}
+      CLOUDFORGE_COMMIT_SHA: ${CLOUDFORGE_COMMIT_SHA:-unknown}
+      CLOUDFORGE_DATABASE_PATH: /data/cloudforge.db
+      CLOUDFORGE_OPERATOR_TOKEN: ${CLOUDFORGE_OPERATOR_TOKEN:-local-development-only}
+      CLOUDFORGE_PROMETHEUS_URL: http://prometheus:9090
+      CLOUDFORGE_SAMPLE_SERVICE_URL: http://sample-service:8100
+      CLOUDFORGE_FORCE_NOT_READY: ${CLOUDFORGE_FORCE_NOT_READY:-false}
+    volumes:
+      - api-data:/data
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      sample-service:
+        condition: service_healthy
+    restart: unless-stopped
+    networks: [frontend, observability]
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+
+  dashboard:
+    build:
+      context: ./apps/dashboard
+    ports:
+      - "3000:8080"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+    networks: [frontend]
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+
+  prometheus:
+    image: prom/prometheus:v3.2.1
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=7d
+      - --web.enable-lifecycle
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/alerting/rules.yml:/etc/prometheus/rules.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "127.0.0.1:9090:9090"
+    depends_on: [api, sample-service, node-exporter, cadvisor]
+    restart: unless-stopped
+    networks: [observability, operator]
+    security_opt: [no-new-privileges:true]
+
+  grafana:
+    image: grafana/grafana:11.5.2
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-change-me-before-sharing}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_SERVER_HTTP_PORT: 3000
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "127.0.0.1:3001:3000"
+    depends_on: [prometheus]
+    restart: unless-stopped
+    networks: [observability, operator]
+    security_opt: [no-new-privileges:true]
+
+  node-exporter:
+    image: prom/node-exporter:v1.9.0
+    command: [--path.rootfs=/host]
+    volumes:
+      # Docker Desktop does not support Linux rslave mount propagation.
+      # A read-only bind still exposes the Docker Linux VM's host metrics.
+      - /:/host:ro
+    restart: unless-stopped
+    networks: [observability]
+    security_opt: [no-new-privileges:true]
+    read_only: true
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.2
+    privileged: true
+    devices: [/dev/kmsg]
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+    restart: unless-stopped
+    networks: [observability]
+
+networks:
+  frontend:
+  operator:
+  observability:
+    internal: true
+
+volumes:
+  api-data:
+  sample-data:
+  prometheus-data:
+  grafana-data:
+

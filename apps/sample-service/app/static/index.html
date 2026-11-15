@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#10231d" />
+    <title>WorkBoard | Delivery Workspace</title>
+    <link rel="stylesheet" href="/assets/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <a class="brand" href="/" aria-label="WorkBoard home">
+          <span class="brand-mark" aria-hidden="true">W</span>
+          <span>WorkBoard</span>
+        </a>
+        <div class="workspace-card">
+          <span class="workspace-avatar">CF</span>
+          <span><strong>Product Delivery</strong><small>Work management</small></span>
+          <span class="chevron">⌄</span>
+        </div>
+        <nav aria-label="Workspace navigation">
+          <button class="nav-item active" data-view="board"><span>▦</span>My board</button>
+          <button class="nav-item" data-view="activity"><span>◴</span>Activity</button>
+          <a class="nav-item" href="http://localhost:3000"><span>◉</span>Platform status</a>
+        </nav>
+        <div class="sidebar-footer">
+          <span class="health-dot"></span>
+          <span><strong>Service online</strong><small>Monitored by CloudForge</small></span>
+        </div>
+      </aside>
+
+      <main>
+        <header class="topbar">
+          <button class="mobile-menu" aria-label="Open menu">☰</button>
+          <div class="search-wrap"><span>⌕</span><input id="search" type="search" placeholder="Search tasks…" /></div>
+          <div class="top-actions">
+            <span class="today" id="today"></span>
+            <button class="avatar" title="Workspace account">SN</button>
+          </div>
+        </header>
+
+        <section class="content" id="board-view">
+          <div class="hero-row">
+            <div><p class="eyebrow">DELIVERY WORKSPACE</p><h1>Work portfolio</h1><p class="subtitle">Prioritize delivery work, track ownership, and manage execution status.</p></div>
+            <button class="primary-button" id="new-task-button"><span>＋</span> New task</button>
+          </div>
+
+          <section class="stats" aria-label="Task summary">
+            <article><span class="stat-icon mint">✓</span><div><strong id="stat-done">0</strong><small>Completed</small></div><em id="completion-rate">0%</em></article>
+            <article><span class="stat-icon amber">↗</span><div><strong id="stat-progress">0</strong><small>In progress</small></div><em>This week</em></article>
+            <article><span class="stat-icon blue">□</span><div><strong id="stat-total">0</strong><small>Total tasks</small></div><em id="project-count">0 projects</em></article>
+            <article><span class="stat-icon coral">!</span><div><strong id="stat-overdue">0</strong><small>Overdue</small></div><em>Needs attention</em></article>
+          </section>
+
+          <section class="toolbar">
+            <div class="filter-group">
+              <select id="project-filter" aria-label="Filter by project"><option value="">All projects</option></select>
+              <select id="priority-filter" aria-label="Filter by priority"><option value="">All priorities</option><option value="high">High priority</option><option value="medium">Medium priority</option><option value="low">Low priority</option></select>
+            </div>
+            <span class="task-count" id="task-count">0 tasks</span>
+          </section>
+
+          <section class="board" aria-label="Task board">
+            <div class="column" data-status="todo"><header><span><i class="dot slate"></i>To do</span><b id="count-todo">0</b></header><div class="task-list" id="todo-list"></div></div>
+            <div class="column" data-status="in_progress"><header><span><i class="dot amber-dot"></i>In progress</span><b id="count-progress">0</b></header><div class="task-list" id="progress-list"></div></div>
+            <div class="column" data-status="done"><header><span><i class="dot green"></i>Done</span><b id="count-done">0</b></header><div class="task-list" id="done-list"></div></div>
+          </section>
+        </section>
+
+        <section class="content hidden" id="activity-view">
+          <div class="hero-row"><div><p class="eyebrow">AUDIT TRAIL</p><h1>Workspace activity</h1><p class="subtitle">Chronological changes to work items and delivery status.</p></div></div>
+          <div class="activity-panel" id="activity-list"></div>
+        </section>
+      </main>
+    </div>
+
+    <dialog id="task-dialog">
+      <form id="task-form">
+        <header><div><p class="eyebrow" id="dialog-eyebrow">NEW TASK</p><h2 id="dialog-title">Add work to the board</h2></div><button type="button" class="close-button" id="close-dialog" aria-label="Close">×</button></header>
+        <input type="hidden" id="task-id" />
+        <label>Task name<input id="task-title" maxlength="160" required placeholder="What needs to be done?" /></label>
+        <label>Description<textarea id="task-description" maxlength="2000" rows="4" placeholder="Add useful context for your team"></textarea></label>
+        <div class="form-grid">
+          <label>Project<input id="task-project" maxlength="80" required value="General" /></label>
+          <label>Due date<input id="task-due-date" type="date" /></label>
+          <label>Priority<select id="task-priority"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option></select></label>
+          <label>Status<select id="task-status"><option value="todo">To do</option><option value="in_progress">In progress</option><option value="done">Done</option></select></label>
+        </div>
+        <div class="form-error hidden" id="form-error"></div>
+        <footer><button type="button" class="danger-button hidden" id="delete-task">Delete task</button><span class="footer-spacer"></span><button type="button" class="secondary-button" id="cancel-dialog">Cancel</button><button class="primary-button" type="submit" id="save-task">Create task</button></footer>
+      </form>
+    </dialog>
+
+    <div class="toast" id="toast" role="status"></div>
+    <script src="/assets/app.js" defer></script>
+  </body>
+</html>
+
